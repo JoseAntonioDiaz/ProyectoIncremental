@@ -33,12 +33,11 @@ function drawFightPreview(){
   const $=id=>document.getElementById(id);
   const team=teamStats();
   const enemy=enemyFor(S.wave);
-  $("waveTitle").textContent="Oleada "+(S.wave+1);
-  $("teamLine").textContent=`Tu equipo: ⚔️${f(team.atk)}  ❤️${f(team.hp)}`;
-  $("enemyTitle").textContent=enemy.emo+" "+enemy.name;
-  $("enemyLine").textContent=`⚔️${f(enemy.atk)}  ❤️${f(enemy.hp)}`;
-  $("teamBar").style.width="100%";
-  $("enemyBar").style.width="100%";
+  const tanks=placedUnits().filter(u=>roleOf(u)==="tank").length;
+  const dps=placedUnits().length-tanks;
+  $("waveTitle").textContent="Oleada "+(S.wave+1)+" — "+enemy.emo+" "+enemy.name;
+  $("teamLine").textContent=`Tu equipo: 🛡️${tanks} ⚔️${dps}  ·  daño total ${f(team.atk)}`;
+  $("enemyLine").textContent=`El enemigo ataca siempre a la fila delantera. Pon tanques (🛡️) ahí para aguantar más.`;
   $("fightBtn").disabled=team.atk<=0;
   if(resultMsg!=null){
     $("fightResult").textContent=resultMsg;
@@ -54,23 +53,34 @@ function runFight(){
   const res=fight();
   if(!res)return;
   animating=true;
-  flashTeam();
   $f("fightBtn").disabled=true;
+  resultMsg=null;resultClass="";
   $f("fightResult").textContent="";
   $f("fightResult").className="";
+  startFightVisual(res);
+  const alive=new Set(res.units.map(x=>x.u));
+  const enemyMaxHp=res.enemy.hp;
   const log=res.log;let i=0;
   const step=()=>{
-    const s=log[i];
-    $f("teamBar").style.width=Math.max(0,res.team.hp?100*s.t/res.team.hp:0)+"%";
-    $f("enemyBar").style.width=Math.max(0,res.enemy.hp?100*s.e/res.enemy.hp:0)+"%";
+    const fr=log[i];
+    if(fr.type==="team"){
+      teamAttackPulse([...alive]);
+      applyEnemyHit(fr.enemyHp/enemyMaxHp);
+    }else{
+      applyUnitHit(fr.unit,fr.hp/fr.maxHp,fr.died);
+      if(fr.died)alive.delete(fr.unit);
+    }
     i++;
-    if(i<log.length){setTimeout(step,120)}
+    if(i<log.length){setTimeout(step,220)}
     else{
-      animating=false;
-      resultMsg=res.victory?`¡Victoria! +${f(res.reward)} oro. Siguiente: oleada ${S.wave+1}.`:"Derrota... mejora tu equipo e inténtalo de nuevo.";
-      resultClass=res.victory?"win":"lose";
-      drawUI();
-      setTimeout(()=>{resultMsg=null;resultClass="";drawUI()},2500);
+      setTimeout(()=>{
+        animating=false;
+        endFightVisual();
+        resultMsg=res.victory?`¡Victoria! +${f(res.reward)} oro. Siguiente: oleada ${S.wave+1}.`:"Derrota... pon tanques delante o mejora tu equipo.";
+        resultClass=res.victory?"win":"lose";
+        drawUI();
+        setTimeout(()=>{resultMsg=null;resultClass="";drawUI()},3000);
+      },250);
     }
   };
   step();

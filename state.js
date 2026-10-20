@@ -25,8 +25,8 @@ S.placements=S.placements||{};
 const f=n=>n<1e3?n.toFixed(n<10?1:0):(()=>{const s=["","K","M","B","T","Qa"];let i=0;while(n>=1e3&&i<s.length-1){n/=1e3;i++}return n.toFixed(2)+s[i]})();
 const has=i=>S.ups.includes(i);
 const cnt=u=>S.own[u].reduce((a,b)=>a+b,0);
-const boardSize=()=>has(4)?BOARD_MAX:BOARD_BASE;
-const placedUnits=()=>Object.values(S.placements);
+const boardSize=()=>BOARD_SIZE;
+const placedUnits=()=>Object.values(S.placements).map(Number);
 const isPlaced=u=>placedUnits().includes(u);
 const benchUnits=()=>NAMES.map((_,u)=>u).filter(u=>cnt(u)>0&&!isPlaced(u));
 const units=()=>S.own.reduce((a,o)=>a+o[0]+o[1]+o[2],0);
@@ -95,20 +95,26 @@ function upg(i){
   onChange();
 }
 
-function rowOf(u){
+function slotOf(u){
   const slot=Object.keys(S.placements).find(k=>+S.placements[k]===u);
-  if(slot==null)return null;
-  return Math.floor(+slot/BOARD_COLS);
+  return slot==null?null:+slot;
 }
+function rowOf(u){const s=slotOf(u);return s==null?null:Math.floor(s/BOARD_COLS)}
 
+// Stats de combate de un campeón: fijas según su rol (tanque/daño), no dependen de dónde se coloque.
 function unitCombat(u){
   const o=S.own[u];
   const mult=o[0]+o[1]*4+o[2]*16;
-  const tier=u&3;
-  let atk=ATK[tier]*mult,hp=HP[tier]*mult;
-  const row=rowOf(u);
-  if(row===0)hp*=ROLE_FRONT_HP;else if(row!=null)atk*=ROLE_BACK_ATK;
-  return{atk,hp};
+  const tier=u&3,role=roleOf(u),rm=ROLE_MULT[role];
+  return{atk:ATK[tier]*mult*rm.atk,hp:HP[tier]*mult*rm.hp,role};
+}
+
+// Equipo ordenado de delante hacia atrás (fila, luego columna); así es como el enemigo elige objetivo.
+function orderedTeam(){
+  return placedUnits().map(u=>{
+    const slot=slotOf(u),c=unitCombat(u);
+    return{u,slot,row:Math.floor(slot/BOARD_COLS),col:slot%BOARD_COLS,...c};
+  }).sort((a,b)=>a.row-b.row||a.col-b.col);
 }
 
 function teamStats(){
@@ -127,27 +133,38 @@ function enemyFor(wave){
   };
 }
 
+// Simulación por rondas: el enemigo golpea siempre a la unidad viva más adelantada
+// (de ahí que poner tanques delante dé más posibilidades de ganar); el equipo golpea
+// en conjunto con la suma de ataque de todas las unidades vivas.
 function fight(){
-  const team=teamStats();
-  if(team.atk<=0||placedUnits().length===0)return null;
+  const order=orderedTeam();
+  if(order.length===0)return null;
   const enemy=enemyFor(S.wave);
-  let t=team.hp,e=enemy.hp,round=0;
-  const log=[{t,e}];
-  while(t>0&&e>0&&round<200){
+  const units=order.map(o=>({u:o.u,hp:o.hp,maxHp:o.hp,atk:o.atk,alive:true}));
+  let enemyHp=enemy.hp;
+  const log=[];
+  let round=0,victory=false;
+  while(round<200){
     round++;
-    e=Math.max(0,e-team.atk);
-    log.push({t,e});
-    if(e<=0)break;
-    t=Math.max(0,t-enemy.atk);
-    log.push({t,e});
+    const teamAtk=units.filter(x=>x.alive).reduce((a,x)=>a+x.atk,0);
+    if(teamAtk<=0)break;
+    enemyHp=Math.max(0,enemyHp-teamAtk);
+    log.push({type:"team",dmg:teamAtk,enemyHp});
+    if(enemyHp<=0){victory=true;break}
+    const target=units.find(x=>x.alive);
+    if(!target)break;
+    target.hp=Math.max(0,target.hp-enemy.atk);
+    const died=target.hp<=0;
+    if(died)target.alive=false;
+    log.push({type:"enemy",unit:target.u,dmg:enemy.atk,hp:target.hp,maxHp:target.maxHp,died});
+    if(!units.some(x=>x.alive))break;
   }
-  const victory=e<=0&&t>0;
   let reward=0;
   if(victory){
     reward=Math.ceil(enemy.hp*0.5+enemy.atk*2);
     S.gold+=reward;S.total+=reward;S.wave++;
   }
-  return{victory,log,reward,enemy,team};
+  return{victory,log,reward,enemy,units};
 }
 
 function tick(dt){

@@ -25,17 +25,14 @@
 <div class="card" id="boardWrap">
   <div id="boardHost"></div>
   <p class="mu" id="boardHint">Arrastra las unidades del banquillo al tablero para activarlas.</p>
-  <p class="mu">Primera fila: +50% vida (tanque). Resto de filas: +30% ataque (daño).</p>
+  <p class="mu"><span style="color:#f0b23c">●</span> Tanque / <span style="color:#e05959">●</span> Daño es fijo de cada campeón. El enemigo golpea siempre a la unidad viva más adelantada: pon tanques en la fila delantera para aguantar más rondas.</p>
 </div>
 
 <h2>Combate</h2>
 <div class="card" id="fightCard">
-  <div class="top">
-    <div><b id="waveTitle"></b><div class="mu" id="teamLine"></div></div>
-    <div style="text-align:right"><div id="enemyTitle"></div><div class="mu" id="enemyLine"></div></div>
-  </div>
-  <div class="bar"><div class="bar-fill" id="teamBar" style="background:var(--ok)"></div></div>
-  <div class="bar"><div class="bar-fill" id="enemyBar" style="background:#d65b5b"></div></div>
+  <b id="waveTitle"></b>
+  <div class="mu" id="teamLine"></div>
+  <div class="mu" id="enemyLine"></div>
   <p><button id="fightBtn" data-f="1" style="width:100%">⚔️ Luchar</button></p>
   <div class="mu" id="fightResult"></div>
 </div>
