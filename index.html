@@ -25,6 +25,19 @@
 <div class="card" id="boardWrap">
   <div id="boardHost"></div>
   <p class="mu" id="boardHint">Arrastra las unidades del banquillo al tablero para activarlas.</p>
+  <p class="mu">Primera fila: +50% vida (tanque). Resto de filas: +30% ataque (daño).</p>
+</div>
+
+<h2>Combate</h2>
+<div class="card" id="fightCard">
+  <div class="top">
+    <div><b id="waveTitle"></b><div class="mu" id="teamLine"></div></div>
+    <div style="text-align:right"><div id="enemyTitle"></div><div class="mu" id="enemyLine"></div></div>
+  </div>
+  <div class="bar"><div class="bar-fill" id="teamBar" style="background:var(--ok)"></div></div>
+  <div class="bar"><div class="bar-fill" id="enemyBar" style="background:#d65b5b"></div></div>
+  <p><button id="fightBtn" data-f="1" style="width:100%">⚔️ Luchar</button></p>
+  <div class="mu" id="fightResult"></div>
 </div>
 
 <h2>Prestigio</h2>

@@ -22,7 +22,60 @@ function drawUI(){
   $("ups").innerHTML=UPS.map((u,i)=>`<div class="card slot"><div>${u[0]}</div><button data-u="${i}" ${has(i)||S.lp<u[1]?"disabled":""}>${has(i)?"Comprada":u[1]+" LP"}</button></div>`).join("");
 
   $("boardHint").textContent=`Tablero: ${placedUnits().length}/${boardSize()} activos. Arrastra para colocar, reordenar o quitar unidades.`;
+
+  if(!animating)drawFightPreview();
 }
+
+let animating=false;
+let resultMsg=null,resultClass="";
+
+function drawFightPreview(){
+  const $=id=>document.getElementById(id);
+  const team=teamStats();
+  const enemy=enemyFor(S.wave);
+  $("waveTitle").textContent="Oleada "+(S.wave+1);
+  $("teamLine").textContent=`Tu equipo: ⚔️${f(team.atk)}  ❤️${f(team.hp)}`;
+  $("enemyTitle").textContent=enemy.emo+" "+enemy.name;
+  $("enemyLine").textContent=`⚔️${f(enemy.atk)}  ❤️${f(enemy.hp)}`;
+  $("teamBar").style.width="100%";
+  $("enemyBar").style.width="100%";
+  $("fightBtn").disabled=team.atk<=0;
+  if(resultMsg!=null){
+    $("fightResult").textContent=resultMsg;
+    $("fightResult").className=resultClass;
+  }else{
+    $("fightResult").textContent=team.atk<=0?"Coloca unidades en el tablero para poder luchar.":"";
+    $("fightResult").className="";
+  }
+}
+
+function runFight(){
+  if(animating)return;
+  const res=fight();
+  if(!res)return;
+  animating=true;
+  flashTeam();
+  $f("fightBtn").disabled=true;
+  $f("fightResult").textContent="";
+  $f("fightResult").className="";
+  const log=res.log;let i=0;
+  const step=()=>{
+    const s=log[i];
+    $f("teamBar").style.width=Math.max(0,res.team.hp?100*s.t/res.team.hp:0)+"%";
+    $f("enemyBar").style.width=Math.max(0,res.enemy.hp?100*s.e/res.enemy.hp:0)+"%";
+    i++;
+    if(i<log.length){setTimeout(step,120)}
+    else{
+      animating=false;
+      resultMsg=res.victory?`¡Victoria! +${f(res.reward)} oro. Siguiente: oleada ${S.wave+1}.`:"Derrota... mejora tu equipo e inténtalo de nuevo.";
+      resultClass=res.victory?"win":"lose";
+      drawUI();
+      setTimeout(()=>{resultMsg=null;resultClass="";drawUI()},2500);
+    }
+  };
+  step();
+}
+function $f(id){return document.getElementById(id)}
 
 document.addEventListener("click",e=>{
   const t=e.target.closest("button");if(!t)return;
@@ -31,6 +84,7 @@ document.addEventListener("click",e=>{
   else if(t.dataset.c)click();
   else if(t.dataset.p)prestige();
   else if(t.dataset.u!=null)upg(+t.dataset.u);
+  else if(t.dataset.f)runFight();
   else if(t.id=="reset"){
     if(!window._rs){
       window._rs=1;t.textContent="¿Seguro? Pulsa otra vez";

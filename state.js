@@ -11,6 +11,7 @@ function fresh(keep){
     ups:keep?keep.ups:[],
     pres:keep?keep.pres:0,
     rr:0,
+    wave:0,
     placements:{} // slot(string index) -> unit index
   };
 }
@@ -18,6 +19,7 @@ function fresh(keep){
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!S.own)S=fresh();
 S.rr=S.rr||0;
+S.wave=S.wave||0;
 S.placements=S.placements||{};
 
 const f=n=>n<1e3?n.toFixed(n<10?1:0):(()=>{const s=["","K","M","B","T","Qa"];let i=0;while(n>=1e3&&i<s.length-1){n/=1e3;i++}return n.toFixed(2)+s[i]})();
@@ -91,6 +93,61 @@ function upg(i){
   const c=UPS[i][1];if(has(i)||S.lp<c)return;
   S.lp-=c;S.ups.push(i);if(i==3)S.gold+=100;
   onChange();
+}
+
+function rowOf(u){
+  const slot=Object.keys(S.placements).find(k=>+S.placements[k]===u);
+  if(slot==null)return null;
+  return Math.floor(+slot/BOARD_COLS);
+}
+
+function unitCombat(u){
+  const o=S.own[u];
+  const mult=o[0]+o[1]*4+o[2]*16;
+  const tier=u&3;
+  let atk=ATK[tier]*mult,hp=HP[tier]*mult;
+  const row=rowOf(u);
+  if(row===0)hp*=ROLE_FRONT_HP;else if(row!=null)atk*=ROLE_BACK_ATK;
+  return{atk,hp};
+}
+
+function teamStats(){
+  let atk=0,hp=0;
+  placedUnits().forEach(u=>{const c=unitCombat(u);atk+=c.atk;hp+=c.hp});
+  return{atk,hp};
+}
+
+function enemyFor(wave){
+  const scale=Math.pow(1.35,wave);
+  return{
+    name:ENEMY_NAMES[wave%ENEMY_NAMES.length],
+    emo:ENEMY_EMO[wave%ENEMY_EMO.length],
+    atk:Math.ceil(8*scale),
+    hp:Math.ceil(40*scale)
+  };
+}
+
+function fight(){
+  const team=teamStats();
+  if(team.atk<=0||placedUnits().length===0)return null;
+  const enemy=enemyFor(S.wave);
+  let t=team.hp,e=enemy.hp,round=0;
+  const log=[{t,e}];
+  while(t>0&&e>0&&round<200){
+    round++;
+    e=Math.max(0,e-team.atk);
+    log.push({t,e});
+    if(e<=0)break;
+    t=Math.max(0,t-enemy.atk);
+    log.push({t,e});
+  }
+  const victory=e<=0&&t>0;
+  let reward=0;
+  if(victory){
+    reward=Math.ceil(enemy.hp*0.5+enemy.atk*2);
+    S.gold+=reward;S.total+=reward;S.wave++;
+  }
+  return{victory,log,reward,enemy,team};
 }
 
 function tick(dt){

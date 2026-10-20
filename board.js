@@ -94,6 +94,14 @@ function redrawSlots(){
   }
 }
 
+function flashTeam(){
+  if(!scene)return;
+  placedUnits().forEach(u=>{
+    const sp=sprites[u];if(!sp)return;
+    scene.tweens.add({targets:sp.cont,scaleX:1.25,scaleY:1.25,yoyo:true,duration:160,ease:"Quad.easeOut"});
+  });
+}
+
 let lastBoardSize=0;
 function renderBoard(){
   if(!scene)return;

@@ -27,3 +27,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #boardWrap{padding:8px}
 #boardHost{width:100%;max-width:480px;margin:0 auto;line-height:0}
 #boardHost canvas{width:100%;height:auto;border-radius:8px}
+.bar{height:10px;border-radius:6px;background:var(--bd);overflow:hidden;margin:4px 0}
+.bar-fill{height:100%;width:100%;transition:width .15s linear}
+#fightResult{min-height:18px;font-weight:600}
+#fightResult.win{color:var(--ok)}
+#fightResult.lose{color:#d65b5b}
