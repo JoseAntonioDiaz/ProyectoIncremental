@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guardia de madrugada</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1ede6;--panel:#fffdf8;--ink:#1d2033;--mute:#6a6d80;--line:#d9d3c7;--amber:#c76a00;--alert:#d23b3b;--ok:#2d7a5a;--tk:#fffaf0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12142a;--panel:#1b1e3a;--ink:#ece8dd;--mute:#9a9cb8;--line:#2e3260;--amber:#ffb454;--alert:#ff6b6b;--ok:#5fd0a0;--tk:#262a4d}}
+:root[data-theme="dark"]{--bg:#12142a;--panel:#1b1e3a;--ink:#ece8dd;--mute:#9a9cb8;--line:#2e3260;--amber:#ffb454;--alert:#ff6b6b;--ok:#5fd0a0;--tk:#262a4d}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:14px}
+h1{font-size:1.3rem;font-weight:800;margin:0 0 10px}
+.hud{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.m{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.m b{display:block;font-size:.8rem;font-weight:400;color:var(--mute);margin-bottom:4px}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:100%}
+#cafe{background:var(--amber)}#alerta{background:var(--alert)}
+.stats{display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:10px;color:var(--mute)}.stats span b{color:var(--ink)}
+#arena{position:relative;height:min(56vh,420px);background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;touch-action:manipulation;user-select:none}
+.tk{position:absolute;width:132px;padding:7px 8px;background:var(--tk);border:2px solid var(--line);border-left:6px solid var(--amber);border-radius:6px;font-size:.78rem;cursor:pointer;line-height:1.2}
+.tk.u{border-left-color:var(--alert)}.tk.c{border-left-color:var(--ok);font-weight:700}
+.tk em{display:block;font-style:normal;color:var(--mute);font-size:.7rem;margin-bottom:4px}
+.tk .h,.tk .t{height:4px;border-radius:3px;margin-top:3px}.tk .h{background:var(--ok)}.tk .t{background:var(--mute);opacity:.5}
+.tk.hit{transform:translateX(3px)}.tk.m{border-left-color:#8a5cff}.tk.k{border-left-color:#e0a030;border-style:dashed}.tk.f{opacity:.7;border-style:dotted}.tk.v{border-left-color:gold}.tk.g{width:190px;border-width:4px;border-left-color:var(--alert);font-weight:800}.tk.b{width:170px;border-width:3px;border-left-color:var(--alert);font-weight:800}
+.ov{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 92%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;overflow:auto}
+.fl{position:absolute;font-weight:800;font-size:.85rem;pointer-events:none;z-index:20;white-space:nowrap;text-shadow:0 1px 2px var(--bg);animation:fup .9s ease-out forwards}@keyframes fup{to{transform:translateY(-34px);opacity:0}}@media (prefers-reduced-motion:reduce){.fl{animation:none}}.ov{z-index:50}.ov.off{display:none}.ov p{max-width:46ch;margin:6px 0;color:var(--mute)}
+button{font:inherit;font-weight:700;background:var(--amber);color:#1d1400;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
+button:disabled{opacity:.35;cursor:not-allowed}button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.shop{display:grid;gap:6px;width:100%;max-width:440px;margin:10px 0}
+.shop div{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;text-align:left;font-size:.85rem}
+.shop small{color:var(--mute);display:block}.shop button{padding:6px 10px;white-space:nowrap}
+@media (prefers-reduced-motion:no-preference){.tk{transition:transform .06s}}
+</style>
+</head>
+<body>
+<main>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h1>Guardia de madrugada</h1><button id="rst" style="background:var(--panel);color:var(--mute);border:1px solid var(--line);padding:6px 10px;font-size:.8rem">Reiniciar partida</button></div>
+<div class="hud">
+ <div class="m"><b>Café <span id="cn"></span></b><div class="bar"><i id="cafe"></i></div></div>
+ <div class="m"><b>Nivel de alerta <span id="an"></span></b><div class="bar"><i id="alerta"></i></div></div>
+ <div class="m" style="grid-column:1/-1"><b>Próxima reunión: faltan <span id="mt">8</span> tickets</b><div class="bar"><i id="reu" style="width:0;background:var(--ok)"></i></div></div>
+</div>
+<div class="stats"><span>Horas facturadas <b id="money">0</b></span><span>Incidencias <b id="done">0</b></span><span>Combo <b id="combo">x1.0</b></span><span>Hora <b id="time">22:00</b></span></div>
+<div id="arena">
+ <div class="ov" id="ov"></div>
+</div>
+</main>
+<script>
+const NAMES=["Error 500 en producción","Disco al 100%","Certificado caducado","Backup fallido","“No me va el wifi”","Servidor sin ping","Deploy roto","Contraseña olvidada","Base de datos lenta","VPN caída"];
+const UP=[
+ {k:"pow",n:"Teclado mecánico",d:"+1 daño por clic",c:2},
+ {k:"cafe",n:"Termo grande",d:"+15 café máximo",c:2},
+ {k:"regen",n:"Cafetera propia",d:"+0,3 café/s",c:3},
+ {k:"auto",n:"Script de guardia",d:"resuelve tickets normales solo, cada vez más rápido",c:12,g:2},{k:"autoT",n:"Script de triaje",d:"el script también resuelve urgentes y VIP (nv1), y escurridizas y en cascada (nv2)",c:15,g:2.2,max:2,need:1},{k:"filt",n:"Filtro anti falsos positivos",d:"elimina los avisos dudosos del tablero sin consecuencias",c:25,g:2,max:1,need:3},
+ {k:"alert",n:"Buena reputación",d:"+15 alerta máxima",c:3},
+ {k:"mult",n:"Tarifa de consultor",d:"+25% horas facturadas",c:4}];
+const DEF={pow:0,cafe:0,regen:0,auto:0,autoT:0,filt:0,alert:0,mult:0,certs:0,best:0,dawns:0,age:20,runs:0,lifeH:0,lifeD:0,leg:0,ret:0,L1:0,L2:0,L3:0};let P=Object.assign({},DEF);
+try{const s=localStorage.getItem("gdm");if(s)P=Object.assign(P,JSON.parse(s))}catch(e){}
+const save=()=>{try{localStorage.setItem("gdm",JSON.stringify(P))}catch(e){}};
+const $=id=>document.getElementById(id),arena=$("arena"),ov=$("ov");
+const DAY=240,clk=t=>{const m=(1320+Math.floor(Math.min(t,DAY)/DAY*480))%1440;return String(m/60|0).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
+let R=null,last=0,raf=0;
+const cd=n=>n>0?Math.max(2,8-n*.8).toFixed(1).replace(".",",")+" s":"inactivo";
+const LG=[{k:"L1",n:"Ahorros",d:"empiezas cada carrera con 3 certificaciones por nivel"},{k:"L2",n:"Contactos",d:"+10% horas facturadas por nivel"},{k:"L3",n:"Experiencia",d:"+1 de daño por clic por nivel"}];
+const cost=u=>Math.ceil(u.c*Math.pow(u.g||1.55,P[u.k]));
+function start(){
+ arena.querySelectorAll(".tk").forEach(e=>e.remove());
+ R={cafe:40+15*P.cafe,cafeMax:40+15*P.cafe,alert:0,alertMax:60+15*P.alert,money:0,done:0,t:0,sp:0,au:0,tk:[],on:true,pk:{},combo:0,ct:0,boss:0,next:8,prev:0,lv:0,paused:false};
+ ov.classList.add("off");last=performance.now();raf=requestAnimationFrame(loop);
+}
+function spawn(ft){
+ if(R.tk.length>=12&&!ft)return;
+ const r=Math.random(),type=ft||(r<.08?"c":r<.2?"u":r<.3?"m":r<.38?"k":r<.46?"f":r<.52?"v":"n"),scale=1+R.t/55;
+ const hp=type==="c"?1:Math.ceil({u:6,n:3,m:3,k:3,f:2,v:4,b:28,g:40}[type]*scale),ttl={u:6,c:5,n:9,m:8,k:8,f:7,v:4,b:15,g:35}[type]*(1+.25*(R.pk.time||0))*(type==="u"&&R.pk.greed?.7:1)*(type==="b"||type==="g"?1:1-.3*Math.min(1,R.t/DAY));
+ const el=document.createElement("div");el.className="tk "+type;
+ el.innerHTML="<em>"+({u:"URGENTE",c:"Descanso",m:"Escurridiza",k:"En cascada",f:"Aviso dudoso",v:"Cliente VIP",b:"JEFE",g:"JEFE FINAL"}[type]||"Ticket")+"</em>"+(type==="c"?"Máquina de café":type==="f"?"Posible falsa alarma":type==="b"?"Caída total del servicio":type==="g"?"EL SERVIDOR LEGACY":NAMES[Math.random()*NAMES.length|0])+'<div class="h"></div><div class="t"></div>';
+ el.style.left=Math.random()*(arena.clientWidth-(type==="b"||type==="g"?180:140))+"px";el.style.top=Math.random()*(arena.clientHeight-80)+"px";
+ const o={el,hp,max:hp,ttl,life:ttl,type,x:parseFloat(el.style.left),y:parseFloat(el.style.top),vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160};
+ el.addEventListener("pointerdown",ev=>{ev.preventDefault();hitT(o)});
+ arena.appendChild(el);R.tk.push(o);
+}
+function hitT(o){
+ if(!R||!R.on||R.paused||R.cafe<1)return;
+ if(o.type==="f"){R.cafe=Math.max(0,R.cafe-3);R.alert+=10;fl(o,"-3 café, +10 alerta","var(--alert)");kill(o);return}
+ R.cafe-=1;const cr=Math.random()<.1+.15*(R.pk.crit||0);o.hp-=(1+P.pow+P.L3)*(cr?3:1);if(cr){o.el.style.outline="3px solid var(--amber)";setTimeout(()=>o.el.style.outline="",200)}if(R.pk.area)R.tk.filter(x=>x!==o&&x.type!=="c"&&(x.type!=="f"||!R.pk.safe)).sort(()=>Math.random()-.5).slice(0,R.pk.area).forEach(x=>{if(x.type==="f"){R.cafe=Math.max(0,R.cafe-3);R.alert+=10;fl(x,"-3 café, +10 alerta","var(--alert)");kill(x);return}x.hp-=1;if(x.hp<=0)solve(x);else x.el.querySelector(".h").style.width=(x.hp/x.max*100)+"%"});o.el.classList.add("hit");setTimeout(()=>o.el.classList.remove("hit"),60);
+ if(o.hp<=0)solve(o);else o.el.querySelector(".h").style.width=(o.hp/o.max*100)+"%";
+}
+function solve(o,fromAuto){
+ if(o.type==="c"){R.cafe=Math.min(R.cafeMax,R.cafe+15);fl(o,"+15 café","var(--ok)")}
+ else{R.combo++;R.ct=3;const tm={u:R.pk.greed?3:2,v:4,b:5,g:8}[o.type]||1;const gn=Math.round(o.max*(1+.25*P.mult)*tm*(1+.1*P.L2)*(1+.1*Math.min(R.combo,15)));R.money+=gn;fl(o,"+"+gn+" h","var(--amber)");R.done++;R.alert=Math.max(0,R.alert-.5-1.5*(R.pk.calm||0));if(R.pk.coffee)R.cafe=Math.min(R.cafeMax,R.cafe+R.pk.coffee);if(o.type==="b"||o.type==="g")R.cafe=R.cafeMax;if(R.done>=R.next){R.prev=R.next;R.next+=16+8*R.lv;R.lv++;meeting()}}
+ kill(o);
+}
+const PK=[{k:"area",n:"Clic en área",d:"Cada clic daña también a 1 ticket más al azar, ¡aunque sea un aviso dudoso!"},{k:"greed",n:"Horas extra",d:"Los urgentes pagan x3 pero caducan antes"},{k:"coffee",n:"Cafetera en la mesa",d:"+1 café por cada resolución"},{k:"time",n:"Prórroga de plazos",d:"+25% de tiempo en incidencias nuevas"},{k:"crit",n:"Dedos de pianista",d:"+15% de probabilidad de crítico (x3)"},{k:"calm",n:"Reunión de equipo",d:"Al resolver un ticket, la alerta baja 1,5 más por nivel (base: 0,5)"},{k:"safe",n:"Clic selectivo",d:"El daño en área ignora los avisos dudosos (requiere Clic en área)",need:"area"}];
+function meeting(){R.paused=true;const o=PK.filter(p=>!p.need||R.pk[p.need]).sort(()=>Math.random()-.5).slice(0,3);ov.innerHTML='<h2>Reunión de las 3 a.m.</h2><p>Elige una mejora para esta guardia.</p><div class="shop">'+o.map(p=>'<div><span><b>'+p.n+(R.pk[p.k]?' · nv '+R.pk[p.k]:'')+'</b><small>'+p.d+'</small></span><button data-p="'+p.k+'">Elegir</button></div>').join("")+'</div>';ov.classList.remove("off");ov.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{R.pk[b.dataset.p]=(R.pk[b.dataset.p]||0)+1;ov.classList.add("off");R.paused=false})}
+function fl(o,t,c){const e=document.createElement("div");e.className="fl";e.textContent=t;e.style.left=Math.max(0,Math.min(arena.clientWidth-100,o.x))+"px";e.style.top=o.y+"px";e.style.color=c;arena.appendChild(e);setTimeout(()=>e.remove(),900)}
+function expire(o){if(o.type!=="c"&&o.type!=="f"){const a=o.type==="g"?R.alertMax:({u:14,b:25,v:4})[o.type]||7;R.alert+=a;if(o.type==="g")R.leg=1;fl(o,o.type==="g"?"¡SE HA CAÍDO TODO!":"+"+a+" alerta","var(--alert)");R.combo=0;if(o.type==="k"){spawn("n");spawn("n")}}kill(o)}
+function kill(o){o.el.remove();R.tk=R.tk.filter(x=>x!==o)}
+function loop(now){
+ if(!R||!R.on)return;
+ const dt=Math.min(.1,(now-last)/1000);last=now;if(R.paused){raf=requestAnimationFrame(loop);return}R.t+=dt;
+ R.cafe=Math.min(R.cafeMax,R.cafe+(.8+.3*P.regen)*dt);
+ R.boss+=dt;if(R.boss>=60){R.boss=0;spawn("b")}if(!R.fb&&R.t>=DAY*.82){R.fb=1;spawn("g");fl({x:10,y:6},"¡EL SERVIDOR LEGACY SE HA CAÍDO!","var(--alert)")}R.ct-=dt;if(R.ct<=0)R.combo=0;R.sp+=dt;if(R.sp>=Math.max(.4,1.5-R.t/80)){R.sp=0;spawn()}
+ if(P.auto>0){R.au+=dt;if(R.au>=Math.max(2,8-P.auto*.8)){R.au=0;const ok=["n"].concat(P.autoT>0?["u","v"]:[],P.autoT>1?["m","k"]:[]);const t=R.tk.find(x=>ok.includes(x.type));if(t)solve(t,1)}}
+ for(const o of R.tk.slice()){
+  if(P.filt&&o.type==="f"&&o.life<o.ttl-1.5){kill(o);continue}o.life-=dt;o.el.querySelector(".t").style.width=(o.life/o.ttl*100)+"%";
+  if(o.type==="m"){const mx=arena.clientWidth-134,my=arena.clientHeight-70;o.x=Math.min(mx,Math.max(0,o.x+o.vx*dt));o.y=Math.min(my,Math.max(0,o.y+o.vy*dt));if(o.x<=0||o.x>=mx)o.vx*=-1;if(o.y<=0||o.y>=my)o.vy*=-1;o.el.style.left=o.x+"px";o.el.style.top=o.y+"px"}
+  if(o.life<=0)expire(o)}
+ hud();
+ if(R.t>=DAY){R.won=true;return end("Son las 06:00. Has aguantado la noche y llega el relevo. Te vas a casa.",true)}
+ if(R.alert>=R.alertMax)return end(R.leg?"El servidor legacy se ha caído del todo y se lleva tu guardia por delante.":"Te han despedido. Demasiadas incidencias sin resolver.");
+ if(R.cafe<1&&!R.tk.length&&R.t>3)return end("Te quedas dormido sobre el teclado.");
+ raf=requestAnimationFrame(loop);
+}
+function hud(){
+ $("cafe").style.width=(R.cafe/R.cafeMax*100)+"%";$("alerta").style.width=(R.alert/R.alertMax*100)+"%";
+ $("money").textContent=R.money;$("combo").textContent="x"+(1+.1*Math.min(R.combo,15)).toFixed(1);$("reu").style.width=Math.min(100,(R.done-R.prev)/(R.next-R.prev)*100)+"%";$("mt").textContent=Math.max(0,R.next-R.done);$("cn").textContent=Math.floor(R.cafe)+"/"+R.cafeMax;$("an").textContent=Math.min(R.alertMax,Math.round(R.alert))+"/"+R.alertMax;$("done").textContent=R.done;$("time").textContent=clk(R.t);
+}
+function retire(){const D=P.lifeD,H=P.lifeH;const e=D<10?['Jubilación forzosa','La empresa te prejubila con una caja de cartón y una taza conmemorativa.']:D>=35&&H>=6000?['Jubilación dorada','Casa en la playa, acciones y un servidor en la mesilla por si acaso. Nadie te llama a las 3 a.m.']:D>=20?['Jubilación tranquila','Un pueblo, un huerto y el móvil siempre en silencio. Casi.']:['Prejubilación con indemnización','Aguantaste lo justo para que pagarte fuera más barato que echarte.'];const lp=Math.floor(D*2+H/500)+(D>=35?10:0);P.leg+=lp;P.ret++;Object.assign(P,{age:20,runs:0,lifeD:0,lifeH:0,dawns:0,pow:0,cafe:0,regen:0,auto:0,autoT:0,filt:0,alert:0,mult:0,certs:3*P.L1});save();ov.innerHTML='<h2>'+e[0]+'</h2><p>'+e[1]+'</p><p>Noches completadas: <b>'+D+'</b> de 45 · Horas de la carrera: <b>'+H+'</b></p><p>Ganas <b>'+lp+' puntos de legado</b>. Empiezas una nueva carrera a los 20 años.</p><button id="go">Ver legado</button>';ov.classList.remove('off');$('go').onclick=()=>shop('',0)}
+function end(msg,win){
+ R.on=false;R.tk.forEach(o=>o.el.remove());R.tk=[];const g=Math.floor(R.money/25)+(win?5:0);P.certs+=g;if(win)P.dawns=(P.dawns||0)+1;P.best=Math.max(P.best,R.money);P.age++;P.runs++;P.lifeH+=R.money;if(win)P.lifeD++;save();if(P.age>=65)return retire();shop(msg,g);
+}
+function shop(msg,g){
+ const lrows=LG.map(u=>{const c=Math.ceil(5*Math.pow(1.8,P[u.k]));return '<div><span><b>'+u.n+' · nv '+P[u.k]+'</b><small>'+u.d+'</small></span><button data-l="'+u.k+'"'+(P.leg<c?" disabled":"")+'>'+c+' pts</button></div>'}).join("");
+ const rows=UP.map(u=>'<div><span><b>'+u.n+' · nv '+P[u.k]+'</b><small>'+u.d+(u.k==="auto"?' · Enfriamiento: '+cd(P.auto)+' → '+cd(P.auto+1):'')+'</small></span><button data-k="'+u.k+'"'+(P.certs<cost(u)||P[u.k]>=(u.max||99)||(u.need||0)>P.dawns?" disabled":"")+'>'+((u.need||0)>P.dawns?'Req. '+u.need+' amanec.':P[u.k]>=(u.max||99)?'máx.':cost(u)+' cert.')+'</button></div>').join("");
+ ov.innerHTML='<h2>'+(msg?(R&&R.won?"¡Amanecer!":"Fin de la guardia"):"Guardia de madrugada")+'</h2><p>'+(msg||"Resiste desde las 22:00 hasta las 06:00. Aplasta incidencias antes de que suban la alerta. Cada clic gasta café, y las máquinas de café lo recuperan. Si llegas al amanecer, ganas.")+'</p>'+
+ (msg?'<p>Facturaste <b>'+R.money+'</b> horas y ganas <b>+'+g+' certificaciones</b>.</p>':"")+
+ '<p>Edad: <b>'+P.age+'</b> (te jubilas a los 65) · Certificaciones: <b>'+P.certs+'</b> · Mejor guardia: '+P.best+' · Amaneceres: '+(P.dawns||0)+' · Puntos de legado: '+P.leg+'</p><div class="shop">'+rows+'</div>'+(P.ret>0||P.leg>0?'<p><b>Legado</b> (permanente, se compra con puntos de legado)</p><div class="shop">'+lrows+'</div>':'')+'<button id="go">'+(msg?"Cambiar de empresa y empezar":"Empezar guardia")+'</button>';
+ ov.classList.remove("off");
+ ov.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const u=UP.find(x=>x.k===b.dataset.k),c=cost(u);if(P.certs>=c&&P[u.k]<(u.max||99)&&(u.need||0)<=P.dawns){P.certs-=c;P[u.k]++;save();shop(msg,g)}});
+ ov.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{const k=b.dataset.l,c=Math.ceil(5*Math.pow(1.8,P[k]));if(P.leg>=c){P.leg-=c;P[k]++;save();shop(msg,g)}});$("go").onclick=start;
+}
+shop("",0);
+addEventListener("keydown",e=>{if(e.key==="J"&&e.shiftKey){P.age=64;save()}});let rt=0;$("rst").onclick=()=>{const b=$("rst");if(!rt){b.textContent="¿Seguro? Se borra todo";rt=setTimeout(()=>{rt=0;b.textContent="Reiniciar partida"},3000);return}clearTimeout(rt);rt=0;b.textContent="Reiniciar partida";if(R){R.on=false;cancelAnimationFrame(raf)}R=null;arena.querySelectorAll(".tk").forEach(e=>e.remove());P=Object.assign({},DEF);save();["money","done","time"].forEach(i=>$(i).textContent=0);$("combo").textContent="x1.0";$("time").textContent="22:00";$("reu").style.width="0";$("mt").textContent=8;$("cafe").style.width="100%";$("alerta").style.width="0";shop("",0)};
+</script>
+</body>
+</html>
