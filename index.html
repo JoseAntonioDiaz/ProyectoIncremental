@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reroll Idle</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>⚔️ Reroll Idle <span class="mu">prototipo</span></h1>
+<div class="card top">
+  <div><div class="big" id="gold"></div><div class="mu" id="gps"></div></div>
+  <div style="text-align:right"><div id="rank"></div><div class="mu" id="lp"></div></div>
+</div>
+<p><button id="clk" data-c="1" style="width:100%;padding:14px;font-size:16px"></button></p>
+
+<h2>Tienda</h2>
+<div class="grid" id="shop"></div>
+<p><button id="rr"></button></p>
+
+<h2>Sinergias <span class="mu" style="text-transform:none;font-size:12px">(solo cuentan unidades colocadas en el tablero)</span></h2>
+<div class="syn" id="syn"></div>
+
+<h2>Tablero</h2>
+<div class="card" id="boardWrap">
+  <div id="boardHost"></div>
+  <p class="mu" id="boardHint">Arrastra las unidades del banquillo al tablero para activarlas.</p>
+  <p class="mu"><span style="color:#f0b23c">●</span> Tanque / <span style="color:#e05959">●</span> Daño es fijo de cada campeón. El enemigo golpea siempre a la unidad viva más adelantada: pon tanques en la fila delantera para aguantar más rondas.</p>
+</div>
+
+<h2>Combate</h2>
+<div class="card" id="fightCard">
+  <b id="waveTitle"></b>
+  <div class="mu" id="teamLine"></div>
+  <div class="mu" id="enemyLine"></div>
+  <p><button id="fightBtn" data-f="1" style="width:100%">⚔️ Luchar</button></p>
+  <div class="mu" id="fightResult"></div>
+</div>
+
+<h2>Prestigio</h2>
+<div class="card"><div id="pres"></div><div class="grid" id="ups" style="margin-top:8px"></div></div>
+<p class="mu"><button id="reset" style="background:var(--mu)">Borrar partida</button></p>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<script src="data.js"></script>
+<script src="state.js"></script>
+<script src="board.js"></script>
+<script src="ui.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
